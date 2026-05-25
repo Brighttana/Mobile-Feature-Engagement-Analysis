@@ -118,7 +118,9 @@ ggplot(retention_summary, aes(x = Engaged_With_Hub, y = Retention_Rate, fill = E
     panel.grid.minor = element_blank()
   )
 
-# Force export directly into the working directory folder
-ggsave(filename = paste0(getwd(), "/feature_retention_impact.png"), width = 9, height = 5.5, dpi = 300)
+# Absolute Path Fix: Forcing images into the exact folder where this script lives
+current_folder <- dirname(rstudioapi::getSourceEditorContext()$path)
+ggsave(filename = file.path(current_folder, "product_funnel_chart.png"), width = 9, height = 5.5, dpi = 300)
+ggsave(filename = file.path(current_folder, "feature_retention_impact.png"), width = 9, height = 5.5, dpi = 300)
 
 print("Pipeline execution complete! Both charts deployed directly to your repository path.")
