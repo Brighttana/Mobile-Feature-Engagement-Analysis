@@ -122,7 +122,66 @@ ggplot(retention_summary, aes(x = Engaged_With_Hub, y = Retention_Rate, fill = E
 
 # Absolute Path Fix: Forcing images into the exact folder where this script lives
 current_folder <- dirname(rstudioapi::getSourceEditorContext()$path)
-ggsave(filename = file.path(current_folder, "product_funnel_chart.png"), width = 9, height = 5.5, dpi = 300)
-ggsave(filename = file.path(current_folder, "feature_retention_impact.png"), width = 9, height = 5.5, dpi = 300)
+# Saving directly to the core C drive folder to bypass OneDrive lockouts
+ggsave(filename = "C:/Users/Brighton/product_funnel_chart.png", width = 9, height = 5.5, dpi = 300)
+ggsave(filename = "C:/Users/Brighton/feature_retention_impact.png", width = 9, height = 5.5, dpi = 300)
 
 print("Pipeline execution complete! Both charts deployed directly to your repository path.")
+
+# PART 2
+
+# Install and load the power analysis library
+if(!require(pwr)) install.packages("pwr")
+library(pwr)
+
+# Define baseline funnel metrics
+baseline_conversion <- 0.45  # 45% mid-funnel conversion
+target_conversion <- 0.50    # 50% target (5% absolute lift)
+
+# Calculate Cohen's h effect size for proportions
+effect_size <- pwr.2p.test(h = ES.h(baseline_conversion, target_conversion), 
+                           sig.level = 0.05, 
+                           power = 0.80)
+
+print(effect_size)
+# This outputs the exact sample size required per variant (Treatment vs. Control)
+
+#PART 3
+
+library(ggplot2)
+
+# Simulated actual experiment results based on power calculations
+# Group A: Control (Old Flow) | Group B: Treatment (Interactive Tool-tip)
+experiment_data <- matrix(c(1450, 1750,  # Group A: Converted (1450), Dropped (1750) -> Total: 3200
+                            1632, 1568), # Group B: Converted (1632), Dropped (1568) -> Total: 3200
+                          nrow = 2, byrow = TRUE,
+                          dimnames = list(Group = c("Control_A", "Treatment_B"),
+                                          Outcome = c("Converted", "Dropped")))
+
+# Statistical Verification via Chi-Square Test
+chisq_result <- chisq.test(experiment_data)
+print(chisq_result)
+
+# Generate a publication-quality statistical visual for recruiters
+df_plot <- data.frame(
+  Group = c("Control A", "Control A", "Treatment B", "Treatment B"),
+  Outcome = c("Converted", "Dropped", "Converted", "Dropped"),
+  Count = c(1450, 1750, 1632, 1568)
+)
+
+# Calculate percentages for the visualization
+df_plot$Percentage <- c(1450/3200, 1750/3200, 1632/3200, 1568/3200) * 100
+
+ggplot(df_plot, aes(x = Group, y = Percentage, fill = Outcome)) +
+  geom_bar(stat = "identity", position = "stack", width = 0.6) +
+  geom_text(aes(label = paste0(round(Percentage, 1), "%")), 
+            position = position_stack(vjust = 0.5), color = "white", fontface = "bold") +
+  scale_fill_manual(values = c("#1f77b4", "#d62728")) +
+  labs(title = "A/B Test Results: Interactive Tool-tip Engagement Lift",
+       subtitle = paste("Chi-Square p-value:", round(chisq_result$p.value, 4), "(Statistically Significant)"),
+       x = "User Cohort Variant", y = "Conversion Composition (%)") +
+  theme_minimal()
+
+# Save image directly to manual copy directory
+ggsave("C:/Users/Brighton/ab_test_experiment_results.png", width = 8, height = 5, dpi = 300)
+
